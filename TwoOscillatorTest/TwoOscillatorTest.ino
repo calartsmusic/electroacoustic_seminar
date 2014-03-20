@@ -1,5 +1,4 @@
 
-//#define ORIGINAL_AUDIOSYNTHWAVEFORM
 #include <Audio.h>
 #include <Wire.h>
 #include <SD.h>
@@ -7,6 +6,10 @@
 float gain = 0;
 float freq = 0;
 int i = 0;
+float k = 0;
+float x = 0;
+float p = 0;
+int chaos_switch = 0;
 
 // Create the Audio components.  These should be created in the
 // order data flows, inputs/sources -> processing -> outputs
@@ -15,6 +18,7 @@ int i = 0;
 AudioOutputAnalog   audioOutput;        // DAC
 
 AudioSynthWaveform  table;
+AudioSynthWaveform  chaos;
 
 float aWavetable[AUDIO_BLOCK_SAMPLES] = {
 -0.35723385214806,
@@ -277,15 +281,14 @@ float fibonacciIsh[AUDIO_BLOCK_SAMPLES] = {
 -0.36616066098213 ,
 -0.18691122531891
 };
-  
-float myWavetable[AUDIO_BLOCK_SAMPLES];
 
 AudioMixer4         mixer;
 
 // Create Audio connections between the components
 //
 AudioConnection c1(table, 0, mixer, 0); // chaotic oscillator output 0 to mixer input 0
-AudioConnection c2(mixer, 0, audioOutput, 0); // mixer output 0 to DAC input 0
+AudioConnection c2(chaos, 0, mixer, 1);
+AudioConnection c3(mixer, 0, audioOutput, 0); // mixer output 0 to DAC input 0
 
 
 void setup() {
@@ -295,35 +298,48 @@ void setup() {
   // detailed information, see the MemoryAndCpuUsage example
   AudioMemory(16);
   
-  for( i = 0; i < AUDIO_BLOCK_SAMPLES; i++ ) {
-    myWavetable[i] = (float)random(65536.0);
-  }
  
   delay(3000);
 
   if( !table.begin( 0.5,555.5,TONE_TYPE_TABLE)) { 
     Serial.println("table.begin returned false"); 
   } else {
-    table.table(fibonacciIsh);
+    table.table(aWavetable);
   };
   
-  // start with no sound
-  mixer.gain(0,0);
+  if( !chaos.begin( 0.5,555.5,TONE_TYPE_CHAOTIC)) {
+        Serial.println("chaos.begin returned false"); 
+  };
+  
+  pinMode(A5,INPUT);
+  
+  // start with some sound
+  mixer.gain(0,1);
+  mixer.gain(1,1);
   Serial.println("------------------------");
 
 }
 
 void loop() {
     gain = analogRead(A0) / 1024.0; // scales gain to 0...1
-//    k = (analogRead(A1) / 200.0) ; // scales k 0...5.0
-//    p = analogRead(A2) / 200.0;
-//    x = analogRead(A3) / 200.0;
+    k = (analogRead(A1) / 200.0) ; // scales k 0...5.0
+    p = analogRead(A2) / 200.0;
+    x = analogRead(A3) / 200.0;
     freq = (analogRead(A4) * 5) + 30.0; 
-//    Serial.println( freq,DEC );
-//    Serial.println(gain,DEC);
-    mixer.gain( 0,gain ); // wants gain to be a float, range 0...1
+    
+    chaos_switch = digitalRead(A5);
+    Serial.println(chaos_switch,DEC);
+
 //    table.amplitude(gain);
     table.frequency(freq);
+    chaos.set_stdmap(k,x,p);
+    chaos.amplitude(chaos_switch);
+    chaos.frequency(freq);
+    
+    // a one-pot mixer
+    mixer.gain(0,gain);
+    mixer.gain(1,1-gain);
+    
 //    delay(random(1000)+10);
 }
 

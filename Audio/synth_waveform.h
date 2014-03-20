@@ -107,7 +107,7 @@ public:
   tone_freq(0), tone_phase(0), tone_incr(0), tone_type(0),
   ramp_down(0), ramp_up(0), ramp_length(0),
     chaos_k(1.13),chaos_x(2.333),chaos_p(4.777), chaos_cycle(0), // marktrayle - arbitrary values
-    usertable(NULL),table_cycle(0)  // marktrayle - table-driven oscillator
+    usertable(NULL),table_phase(0.0f),dphase(0.0f)  // marktrayle - table-driven oscillator
   { 
   }
   // Change the frequency on-the-fly to permit a phase-continuous
@@ -116,11 +116,11 @@ public:
   {
     tone_incr = (0x100000000LL*t_hi)/AUDIO_SAMPLE_RATE_EXACT;
   }
-    void frequency(float t_hi)
-    {
-        tone_incr = (0x100000000LL*t_hi)/AUDIO_SAMPLE_RATE_EXACT;
-        tone_freq = t_hi; // added by marktrayle
-    }
+  void frequency(float t_hi)
+  {
+    tone_incr = (0x100000000LL*t_hi)/AUDIO_SAMPLE_RATE_EXACT;
+    tone_freq = t_hi; // added by marktrayle
+  }
   // If ramp_length is non-zero this will set up
   // either a rmap up or a ramp down when a wave
   // first starts or when the amplitude is set
@@ -155,10 +155,12 @@ public:
 
         usertable = new float[AUDIO_BLOCK_SAMPLES];
         Serial.print( "size of newly allocated usertable is "); Serial.print(sizeof(usertable),DEC); Serial.println(" bytes");
+        Serial.print("(table)usertable addr? "); Serial.println((unsigned long)usertable,HEX);
         
         for( int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-            Serial.print("table["); Serial.print(i,DEC); Serial.print("] = "); Serial.println(table[i],DEC );
             usertable[i] = table[i];
+            Serial.print("usertable["); Serial.print(i,DEC); Serial.print("] = "); Serial.println(usertable[i],DEC );
+
         };
         usertable = table;
     }
@@ -189,7 +191,7 @@ private:
     float   chaos_p;
     float   chaos_px;
     float   chaos_cycle;
-    float   table_cycle;
+    float   table_phase;
     // these might be unused
     
     float  xm;
@@ -198,6 +200,7 @@ private:
     
     // added by mark t., for the table oscillator
     float *usertable;
+    float dphase;
     
 };
 

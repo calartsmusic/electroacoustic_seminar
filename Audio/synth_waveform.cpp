@@ -265,39 +265,51 @@ void AudioSynthWaveform::update(void)
       }
       break;
         case TONE_TYPE_TABLE:
+
         {
-            float cycle = table_cycle;
-            float out = 0.0f;
-            float slope;
-            float interp = 0.0f;
-            float samplesPerCycle = AUDIO_SAMPLE_RATE_EXACT * (1.0/tone_freq);
+            // Scott Cazan wrote the original code for this,
+            // I integrated it into the Audio library.
+                
 
-            // this assumes that frequency is never >= samplerate
-            slope = 1.f / samplesPerCycle;
+                unsigned int i;
             
-            for(int i = 0, k = 0;i < AUDIO_BLOCK_SAMPLES;i++) {
-
-                if(cycle >= samplesPerCycle){
-                    // cycle -= samplesPerCycle;
-                    cycle = 0;
-                    interp = 0.0f;
-//                    out = usertable[];
-//                    if( k >= AUDIO_BLOCK_SAMPLES) { k = 0; } else { k++; };
-//                    *bp++ = (short)((usertable[k]) * tone_amp);
-                };
-                cycle++;
-
-                if( k >= AUDIO_BLOCK_SAMPLES) { k = 0; } else { k++; };
-                *bp++ = (short)((usertable[(int)(k * interp)])  * tone_amp);
-
-//                tone_phase += tone_incr; // marktrayle: ????
-                interp += slope;
-
-            };
-
-            table_cycle = cycle;
-        }
-
+            
+                float rate = tone_freq / (AUDIO_SAMPLE_RATE_EXACT / AUDIO_BLOCK_SAMPLES);
+            
+                // FILLIN' THA BLOCK!
+                for( i=0; i < AUDIO_BLOCK_SAMPLES; i++ ) {
+                    
+//                    float rate = tone_freq / (AUDIO_SAMPLE_RATE_EXACT / AUDIO_BLOCK_SAMPLES);
+                    
+                    *bp++ = usertable[(int)floor(table_phase)] * tone_amp;
+                    
+                    
+                    float sampleLow = usertable[(int)floor(table_phase)];
+                    int nextPhase = (int)floor(table_phase + 1);
+                    if(nextPhase >= AUDIO_BLOCK_SAMPLES) {
+                        nextPhase = 0;
+                    }
+                    
+                    float sampleHigh = usertable[nextPhase];
+                    
+                    table_phase += rate;
+                    
+                    if(table_phase >= AUDIO_BLOCK_SAMPLES){
+                        table_phase = 0.0f;
+                    }
+                    
+                    
+                    float sampleDelta = sampleHigh - sampleLow;
+                    float phaseRemainder = table_phase - floor(table_phase);
+                    
+                    float sampleNext = sampleLow + (sampleDelta * phaseRemainder);
+                    
+                    sampleNext *= tone_amp;
+                    
+                }
+            
+            }
+  
         break;
     case TONE_TYPE_NOISE:
         for(int i = 0;i < AUDIO_BLOCK_SAMPLES;i++) {
@@ -316,16 +328,17 @@ void AudioSynthWaveform::update(void)
         float px = chaos_px;
         float cycle = chaos_cycle;
         float out;
-        float slope;
+//        float slope;
         float interp = 0.0f;
         float samplesPerCycle = AUDIO_SAMPLE_RATE_EXACT/tone_freq;
+        float rate = tone_freq / (AUDIO_SAMPLE_RATE_EXACT / AUDIO_BLOCK_SAMPLES);
             
 //        Serial.print("samplesPerCycle is "); Serial.println(samplesPerCycle,DEC);
 //         Serial.print("AUDIO_SAMPLE_RATE_EXACT is "); Serial.println(AUDIO_SAMPLE_RATE_EXACT,DEC);
 //             Serial.print("tone_freq is "); Serial.println(tone_freq,DEC);
         
-        slope = 1.f / samplesPerCycle;
-            
+//        slope = 1.f / samplesPerCycle;
+        
             
         for(int i = 0;i < AUDIO_BLOCK_SAMPLES;i++) {
             if(cycle >= samplesPerCycle){
@@ -346,7 +359,8 @@ void AudioSynthWaveform::update(void)
 
 //            tone_phase += tone_incr;
 //            Serial.println(*(bp-1),DEC);
-            interp += slope;
+//            interp += slope;
+            interp += rate;
         };
         chaos_x = x;
         chaos_p = p;
