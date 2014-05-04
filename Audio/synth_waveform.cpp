@@ -304,7 +304,7 @@ void AudioSynthWaveform::update(void)
                     
                     float sampleNext = sampleLow + (sampleDelta * phaseRemainder);
                     
-                    sampleNext *= tone_amp;
+                    sampleNext *= tone_amp; // sampleNext = sampleNext * tone_amp
                     
                 }
             
