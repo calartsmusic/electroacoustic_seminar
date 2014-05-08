@@ -50,15 +50,26 @@ void newFreq(void) {
   seqSine.frequency( freqs[freqCount] * freqScaler);
   if( freqCount < (nFreqs-1)) freqCount++;
   else freqCount = 0;
+  digitalWrite(3,random(2));
+  digitalWrite(4,random(2));
+  digitalWrite(5,random(2));
+  digitalWrite(6,random(2));
 }
 
 void setup(){
 //  Serial.begin(19200);
   AudioMemory(16);
+  
   pinMode(7,INPUT);
   pinMode(8,INPUT);
   pinMode(9,INPUT);
   pinMode(10,INPUT);
+  
+  pinMode(3,OUTPUT);
+  pinMode(4,OUTPUT);
+  pinMode(5,OUTPUT);
+  pinMode(6,OUTPUT);
+  
   sine.begin( 0.5,777.7,TONE_TYPE_SINE);
   seqSine.begin( 0.5,777.7,TONE_TYPE_SINE);
   triangle.begin( 0.5,777.7,TONE_TYPE_TRIANGLE);
@@ -68,9 +79,6 @@ void setup(){
 }
 
 void loop(void){
-  AMin;
-  gain;
-  FMin;
   rangeSW     = digitalRead(7); //0 or 1
   offset      = digitalRead(8);
   mixerBit1   = digitalRead(9);
